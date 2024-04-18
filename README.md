@@ -1,1 +1,1 @@
-# DiscordToken
+# DiscordTokens
