@@ -1,45 +1,64 @@
 @echo off
-echo Optimizing server performance...
+:: Ethical Exploration - Server Performance & Network Optimization Utility
+:: License: GNU General Public License v3.0 (GPL-3.0)
 
-:: Stop unnecessary services
-echo Stopping unnecessary services...
-net stop "Windows Update"
-net stop "Superfetch"
-net stop "Windows Search"
-:: Add more services as needed
+setlocal enabledelayedexpansion
 
-:: Clear temporary files
-echo Clearing temporary files...
-del /s /q %TEMP%\*
-del /s /q C:\Windows\Temp\*
+echo =========================================================
+echo    Ethical Exploration - Server Performance Optimizer   
+echo =========================================================
+echo.
 
-:: Clear DNS cache
-echo Clearing DNS cache...
-ipconfig /flushdns
+:: Verify Administrator Privileges
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [!] Warning: Please run this script as Administrator for full optimization.
+    echo.
+)
 
-:: Optimize network settings
-echo Optimizing network settings...
-netsh int tcp set global autotuninglevel=normal
-netsh int tcp set global chimney=enabled
-netsh int tcp set global dca=enabled
-netsh int tcp set global netdma=enabled
+:: 1. Stop background telemetry and indexing services if desired
+echo [*] Managing performance-heavy background services...
+net stop "Windows Search" >nul 2>&1
+net stop "SysMain" >nul 2>&1
 
-:: Defragment hard drive (Optional, time-consuming)
-:: echo Defragmenting hard drive...
-:: defrag C: /H /U /V
+:: 2. Clean temporary file caches
+echo [*] Purging temporary files and cache...
+if exist "%TEMP%" (
+    del /s /f /q "%TEMP%\*" >nul 2>&1
+    for /d %%p in ("%TEMP%\*") do rmdir /s /q "%%p" >nul 2>&1
+)
+if exist "C:\Windows\Temp" (
+    del /s /f /q "C:\Windows\Temp\*" >nul 2>&1
+    for /d %%p in ("C:\Windows\Temp\*") do rmdir /s /q "%%p" >nul 2>&1
+)
 
-:: Free up memory (Clear Standby List)
-echo Freeing up memory...
-powershell.exe -command "Clear-DnsClientCache"
-powershell.exe -command "[void] [System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms'); [System.Windows.Forms.Application]::SetSuspendState([System.Windows.Forms.PowerState]::Hibernate, $false, $false)"
+:: 3. Flush DNS Cache
+echo [*] Flushing DNS resolver cache...
+ipconfig /flushdns >nul 2>&1
+powershell -NoProfile -Command "Clear-DnsClientCache" >nul 2>&1
 
-:: Display memory status
-echo Displaying memory status...
+:: 4. Optimize TCP/IP Network Stack
+echo [*] Optimizing network TCP window and auto-tuning...
+netsh int tcp set global autotuninglevel=normal >nul 2>&1
+netsh int tcp set global chimney=enabled >nul 2>&1
+netsh int tcp set global dca=enabled >nul 2>&1
+netsh int tcp set global netdma=enabled >nul 2>&1
+
+:: 5. Free System Memory & Trim Process Working Sets (Safe GC & Working Set Reduction)
+echo [*] Reclaiming inactive memory and trimming working sets...
+powershell -NoProfile -Command ^
+    "[System.GC]::Collect(); [System.GC]::WaitForPendingFinalizers(); Get-Process | ForEach-Object { try { $_.MinWorkingSet = $_.MinWorkingSet } catch {} }" >nul 2>&1
+
+:: 6. Display Memory & Resource Summary
+echo.
+echo =========================================================
+echo MEMORY & RESOURCE STATUS:
+echo =========================================================
 systeminfo | findstr /C:"Total Physical Memory" /C:"Available Physical Memory"
+powershell -NoProfile -Command ^
+    "$os = Get-CimInstance Win32_OperatingSystem; Write-Host ('Free Physical Memory : ' + [math]::Round($os.FreePhysicalMemory / 1024, 2) + ' MB / ' + [math]::Round($os.TotalVisibleMemorySize / 1024, 2) + ' MB')"
 
-:: Restart server (Optional)
-:: echo Restarting server...
-:: shutdown /r /t 0
-
-echo Optimization complete.
+echo.
+echo [!] Optimization completed successfully.
+echo =========================================================
 pause

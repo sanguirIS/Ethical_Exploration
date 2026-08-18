@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Outputs / Temporary audit logs
+csrf_poc.html
+wifi_passwords_export.txt
+found_subdomains.txt
+*.log
+
+# .NET / C#
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
